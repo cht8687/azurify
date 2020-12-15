@@ -36,10 +36,10 @@ import Azure.BlobListParser
 #endif
 
 import Network.HTTP.Conduit
-import qualified Network.HTTP.Client as HC
+import qualified Network.HTTP.Client.TLS as HCT
 import Network.HTTP.Types (urlDecode, renderQuery, simpleQueryToQuery)
 import Network.HTTP.Types.Header
-import Network.HTTP.Types.Status
+import Network.HTTP.Types.Status ( Status(statusCode) )
 import System.Locale
 import System.IO (openBinaryFile, IOMode(..))
 import Data.List
@@ -281,7 +281,7 @@ doRequest account authKey resource params reqType reqBody extraHeaders = do
                           , requestHeaders = authHeader : headers
                           , requestBody = RequestBodyBS reqBody }
 
-    manager <- newManager HC.defaultManagerSettings
+    manager <- newManager HCT.tlsManagerSettings
 
     withSocketsDo $ httpLbs request manager
 
