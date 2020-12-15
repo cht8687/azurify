@@ -3,3 +3,4 @@ cabal.sandbox.config
 dist/
 
 .DS_STORE
+/dist-newstyle

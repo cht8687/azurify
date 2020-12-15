@@ -36,18 +36,19 @@ import Azure.BlobListParser
 #endif
 
 import Network.HTTP.Conduit
+import qualified Network.HTTP.Client as HC
 import Network.HTTP.Types (urlDecode, renderQuery, simpleQueryToQuery)
 import Network.HTTP.Types.Header
 import Network.HTTP.Types.Status
 import System.Locale
 import System.IO (openBinaryFile, IOMode(..))
 import Data.List
-import Data.Time
+import qualified Data.Time as DT
 import Data.Char (isSpace)
 import Data.CaseInsensitive (foldedCase)
 import Data.Maybe (fromJust, isJust, listToMaybe, fromMaybe)
 import Data.Ord (comparing)
-import Network (withSocketsDo)
+import Network.Socket (withSocketsDo)
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
@@ -278,10 +279,11 @@ doRequest account authKey resource params reqType reqBody extraHeaders = do
     let authHeader = ("Authorization", "SharedKey " <> account <> ":" <> signature)
     let request = initReq { method = reqType
                           , requestHeaders = authHeader : headers
-                          , checkStatus = \_ _ _ -> Nothing -- don't throw an exception when a non-2xx error code is received
                           , requestBody = RequestBodyBS reqBody }
 
-    withSocketsDo $ withManager $ \manager -> httpLbs request manager
+    manager <- newManager HC.defaultManagerSettings
+
+    withSocketsDo $ httpLbs request manager
 
 encodeParams :: [(B.ByteString, B.ByteString)] -> B.ByteString
 encodeParams = renderQuery True . simpleQueryToQuery
@@ -325,7 +327,7 @@ stringToSign SignData {..} =
     strip $ B.intercalate "\n" [verb, contentEncoding, contentLanguage, contentLength, contentMD5, contentType, date, ifModifiedSince, ifMatch, ifNoneMatch, ifUnmodifiedSince, range, canonicalizedHeaders, canonicalizedResource]
 
 httpTime :: IO B.ByteString
-httpTime = fmap (B8.pack . formatTime defaultTimeLocale "%a, %d %b %Y %X GMT") getCurrentTime
+httpTime = fmap (B8.pack . DT.formatTime DT.defaultTimeLocale "%a, %d %b %Y %X GMT") DT.getCurrentTime
 
 sign :: B.ByteString -> SignData -> B.ByteString
 sign key = B64.encode . toStrict . bytestringDigest . hmacSha256 (toLazy $ B64.decodeLenient key) . LUTF8.fromString . B8.unpack . stringToSign
