@@ -253,7 +253,7 @@ breakLease account authKey containerName blobName = do
 doRequest :: B.ByteString -> B.ByteString -> B.ByteString -> [(B.ByteString, B.ByteString)] -> B.ByteString -> B.ByteString -> [Header] -> IO (Response L.ByteString)
 doRequest account authKey resource params reqType reqBody extraHeaders = do
     now <- liftIO httpTime
-    let url = B8.unpack ("http://" <> account <> ".blob.core.windows.net" <> resource <> encodeParams params)
+    let url = B8.unpack ("https://" <> account <> ".blob.core.windows.net" <> resource <> encodeParams params)
     initReq <- parseUrl url
 
     let headers = ("x-ms-version", "2011-08-18")
